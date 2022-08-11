@@ -3,102 +3,108 @@ import functools as ft
 import itertools as it
 import multiprocessing as mp
 
+########################################################################
 
-#####
+def gen():
+"""An abstract generator
 
-# Function Name: autoFormat
+This function will always yield a call of itself and so the type of any
+number of applications of `next` on it will always be a generator
+"""
 
-# A subroutine for constructing complex strings using a 
-# boolean-array, `selection`, as a slice on the provided array, `collection`
+	yield gen()
 
-# Input:
-# `collection`	:	An array of string-compatible 'elements'
-# `selection`	:	A boolean-array the same dimensions as `collection`
-# `pre`			:	Any string needing to occur at the beginning of the result
-# `sep`			:	Any string, or list of strings, or generator of strings, needing to occur in between 'selected elements'
-# `end`			:	Any string needing to occur at the end of the result
+########################################################################
 
-# Output:
-# A complex formatted string which begins with `pre`, ends with `end`, and has exactly the 'elements'
-# from `collection` for which the same index yields a True in `selection`, each seperated by `sep`
 
-def autoFormat( collection, selection, pre="", sep="", end="" ):
+def autoFormat( collection: type( np.array( [] ) ), 
+				selection: type( np.array( [ bool ] ) ), 
+				pre="", sep="", end="" 
+				) -> str:
+"""A subroutine for constructing complex strings 
 
-	if( type( sep ) == type( '' ) ):
+Uses a boolean-array, `selection`, as a slice on the provided array,
+`collection`. A complex formatted string is then formatted, which 
+begins with `pre`, ends with `end`, and has exactly the 'elements'
+in our slice, each seperated by `sep`
+"""
 
-		return ft.reduce( lambda acc, x: acc + str ( x ) + sep, collection[ selection ], pre ) + end
+	sepType = type( sep )
 
-	elif( type( sep ) == type( [] ) ):
 
+	# If we have a simple string seperator
+	if( sepType == type( '' ) ):
+
+		return pre + sep.join( collection[ selection ] ) + end
+
+	# If we have a list of seperators
+	elif( sepType == type( [] ) ):
+
+		# We get the selection from collection so we can index
+		# into it in our lambda expression
 		selection = collection[ selection ]
 
-		return ft.reduce( lambda acc, x: acc + str ( selection[ x ] ) + sep[ x ], range( len( selection ) ), pre ) + end
+		# This reduce iterates over selection and sep
+		# and joins the former using the latter
+		return ft.reduce( lambda acc, x: 
+			acc + str ( selection[ x ] ) + sep[ x ], 
+			range( len( selection ) ), 
+			pre 
+			) + end
 
-	elif( type( sep ) == type( ( lambda : ( yield ) )() ) )
+	# If we have a generator of seperators
+	elif( type( sep( [] ) ) == type( gen() ) ):
 
-		return ft.reduce( lambda acc, x: acc + str ( x ) + next(sep), collection[ selection ], pre ) + end
+		# We get the generator for this given collection and selection
+		sep = sep( collection[ selection ] )
+
+		# Calculate the result by reducing over the selection
+		# and joining on successive yields from sep
+		return ft.reduce( lambda acc, x: 
+			acc + str ( x ) + next(sep), 
+			collection[ selection ], 
+			pre 
+			) + end
 
 
-#####
-
-# Function Name: checkOperatorType
-
-# A subroutine for checking if the 'Object in Question', `oiq`, has a 
-# compatible type, `oiqType`, with the provided `operatorName`
-
-# Input:
-# `oiqType`			:	'Object in Question'
-# `operatorName`	:	The name of a function that may or may not be defined on the 'Object in Question'
-
-# Output:
-# A boolean indicating whether or not `oiqType` and the type of `operator` match
+########################################################################
 
 def checkOperatorType( oiqType, operatorName ):
+"""A subroutine that checks if `oiq` and `operator` have compatible type
+
+Checks if the `operatorName` provided is defined the `__dict__` 
+of `oiqType`, and then returns the bool
+"""
 
 	return ( operatorName in oiqType.__dict__ )
 
-#####
+########################################################################
 
-# Function Name: checkOperatorType
-
-# A subroutine for checking if the 'Object in Question', `oiq`, has a 
-# compatible type, `oiqType`, with any `elements` in the provided `collection`
-
-# Input:
-# `oiqType`		:	'Object in Question'
-# `collection`	:	An iterable that may or may not be completely of type `oiqType`
-
-# Output:
-# A boolean-array indicating whether or not `oiqType` and the type of each 'element' in `collection` match
 def checkCollectionType( oiqType, collection ):
+"""A subroutine for checking if  `collection` has a matching type
+
+Takes in a target type and returns a boolean-array indicating which,
+if any, `elements` in the provided `collection` have matching type
+"""
 
 	return np.array( [ ( oiqType and type( element ) ) for element in collection ] )
 
-#####
-
-# Function Name: checkLimitationType
-
-# A subroutine for checking if the 'Object in Question', `oiq`, has a 
-# compatible type, `oiqType`, with the 'Comparison Operator', `comparator`, 
-# and `bounds` in `limitation`
-
-# Input:
-# oiqType		:	The type of the 'Object in Question'
-# limitation	:	A pair of 'Comparison Operator' and 'Bounds'
-
-# Output:
-# A boolean-triple indicating which of the 'Comparison Operator' and `bounds`
-# have compatible type with `oiqType`
+########################################################################
 
 def checkLimitationType( oiqType, limitation ):
+"""A subroutine for checking if `oiq` and `limitiation` are compatible
 
+Checks if the 'Object in Question', `oiq`, has a 
+compatible type, `oiqType`, with the 'Comparison Operator', `comparator`, 
+and `bounds` in `limitation`
+"""
 	return np.array( [ 
 				checkOperatorType( oiqType, limitation[ 0 ] ),
 				checkCollectionType( oiqType, limitation[ 1 ][ 0 ] ),
 				checkCollectionType( oiqType, limitation[ 1 ][ 1 ] ) 
 			] )
 
-#####
+########################################################################
 
 # Function Names: checkLeftBounds & checkRightBounds
 
@@ -117,13 +123,13 @@ def checkLimitationType( oiqType, limitation ):
 
 def checkLeftBounds( oiq, comparator, bounds ):
 
-	return np.array( [ comparator( bound, oiq ) for bound in bounds ] ).all()
+	return np.array( [ comparator( bound, oiq ) for bound in bounds ] )
 
 def checkRightBounds( oiq, comparator, bounds ):
 
-	return np.array( [ comparator( oiq, bound ) for bound in bounds ] ).all()
+	return np.array( [ comparator( oiq, bound ) for bound in bounds ] )
 
-#####
+########################################################################
 
 # Function Name: checkBounds
 
@@ -147,7 +153,7 @@ def checkBounds( oiq, comparatorName, bounds ):
 	# Then we assemble the pair by calling `checkLeftBounds` and `checkRightBounds`
 	return ( checkLeftBounds( oiq, comparator, bounds[0] ), checkRightBounds( oiq, comparator, bounds[1] ) )
 
-#####
+########################################################################
 
 # Function Name: checkEvery
 
@@ -164,7 +170,7 @@ def checkEvery( collection, neg = False ):
 
 	return np.array( [ ( neg ^ subcollection.all() ) for subcollection in collection ] )
 
-#####
+########################################################################
 
 # Function Name: generateErrorReport
 
@@ -206,7 +212,7 @@ def generateLimitationErrorReport( limitations, limitationsXCheck, typeCheck = T
 			sep = "\n"
 			)
 
-#####
+########################################################################
 
 # Function Name: checkLimitations
 
@@ -288,4 +294,152 @@ def checkLimitations( oiq, limitations, verbose = False ):
 		else:
 			return True
 
-#####	
+########################################################################
+
+# Function Name: askUserRTI
+
+# A fault-tolerant subroutine for asking the user for real-time input
+
+# Input:
+# `question`			:	A string expressing the inquiry for the user
+# `answerTypeName`		:	A string representing the name of the type `answer` must be coercible to
+# `answerLimitations`	:	An optional array of pairs containing a 'Comparison Operator' and 'Bounds'
+
+# Output:
+# A validated answer recieved via real-time input
+
+def askUserRTI( question, answerTypeName, answerLimitations = None ):
+
+	answered = False
+
+	# First we ensure that our `answerTypeName` is well-defined
+	try:
+
+		answerType = locals()[ answerTypeName ]
+
+	# If the `answerType` is unable to be retrieved we raise the KeyError
+	except KeyError as e:
+
+		raise( e )
+		
+	# Otherwise we use the `answerType` as our constructor on `answer`
+	else:
+
+		while( not answered ):
+
+			# To get `answer` we ask `question`
+			answer = input( question + "\n\t->\t" )
+
+			# We then want to see if `answerType` is able to act on `answer` without error
+			try:
+
+				answer = answerType( answer )
+
+			# If answerType is unable to coerce strings, we raise the TypeError
+			except TypeError as e:
+
+				# We simply raise the answer -- instead of alerting the user -- this is
+				# because answerType -- although defined -- is not a valid choice
+				# as it is unable to coerce text input from the user
+				raise( e )
+
+			# If answerType is unable to coerce the specific string given, we request
+			# a new answer from the user
+			except ValueError as e:
+
+				# First, we tell the user about the error and that we are going to describe it
+				print( """ 
+						Sorry! Your answer isn't valid. The `ValueError` is printed below,
+						and it means that your answer doesn't fall within the range of strings that 
+						the answer type for this question is able to understand. Once you
+						understand how to correct your answer, please try again.
+					""" )
+
+				# Then, we pass along the `ValueError` text itself
+				print( "Value Error: " + str( e ) )
+
+			# If `answerType` is able to coerce the given string, then we check if
+			# `answer` is able to pass all requirements in `answerLimitations` 
+			else:
+				
+				limitationsCheck = checkLimitations( answer, answerLimitations, verbose = True )
+
+				if( checkEvery( np.array( [ checkEvery( subcollection ) for subcollection in limitationsCheck ] )  ) ):
+					print( "Answer Accepted!" )
+					answered = True
+	finally:
+		return answer
+
+########################################################################
+
+# Class Name: TypeFormerAssistant
+
+# This class enables real-time user formation of Types via asking the user for real-time input.
+
+# Parameters:
+# None
+
+class TypeFormerAssistant:
+
+	def __init__( verbose = True ):
+
+		self.__workers = mp.Pool()
+
+		self.__exit = False
+
+		if ( verbose ):
+
+			# We greet the user and introduce the TypeFormerAssistant
+			helloMessage()
+
+			# We display the options available 
+			displayMethods()
+
+		# We begin the life-cycle loop of our TypeFormerAssistant
+		while( not __exit ):
+
+			__workers.map( self.interpret, awaitInput() )
+
+
+	####################################################################
+
+	def helloMessage():
+	"""Greets the user and introduces basic concepts
+
+	This method is only called if the TypeFormerAssistant is started 
+	in `verbose` mode
+	"""
+
+		# TODO
+		print( "Hello Message!" )
+
+	####################################################################
+
+	def displayMethods():
+	"""This method displays only the public methods
+
+	This method is only called if the TypeFormerAssistant is started 
+	in `verbose` mode
+	"""
+
+		# TODO
+		print( "Display Methods!")
+
+########################################################################
+
+def main():
+"""This is the main for TypeFormerAssistant
+
+
+Side-effects are dependent on 'Real-Time-Input' from the User:
+Results can be printed to terminal during runtime, or
+Results can be written to files as serialized objects ( JSON ), or
+Results can be written to files as binaries to be reloaded 
+later ( pickling )
+"""
+
+	# TODO
+	print( "Main!" )
+
+if __name__ == '__main__':
+	main()
