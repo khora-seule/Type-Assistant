@@ -76,7 +76,6 @@ def autoFormat( collection, selection, pre="", sep="", end="" ):
 
 		raise( AssertionError )
 
-
 ########################################################################
 
 def checkOperatorType( oiqType, operatorName ):
@@ -101,17 +100,17 @@ def checkCollectionType( oiqType, collection ):
 
 ########################################################################
 
-def checkLimitationType( oiqType, limitation ):
+def checkLimitType( oiqType, limit ):
 	"""Subroutine for checking if `oiq` and `limitiation` are compatible
 
 	Checks if the 'Object in Question', `oiq`, has a 
 	compatible type, `oiqType`, with the 'Comparison Operator', 
-	`comparator`, and `bounds` in `limitation`
+	`comparator`, and `bounds` in `limit`
 	"""
 	return np.array( [ 
-				checkOperatorType( oiqType, limitation[ 0 ] ),
-				checkCollectionType( oiqType, limitation[ 1 ][ 0 ] ),
-				checkCollectionType( oiqType, limitation[ 1 ][ 1 ] ) 
+				checkOperatorType( oiqType, limit[ 0 ] ),
+				checkCollectionType( oiqType, limit[ 1 ][ 0 ] ),
+				checkCollectionType( oiqType, limit[ 1 ][ 1 ] ) 
 			] )
 
 ########################################################################
@@ -173,10 +172,10 @@ def checkEvery( collection, neg = False ):
 
 ########################################################################
 
-def generateLimitationErrorReport( limitations, limitationsCheck, typeCheck = True ):
+def generateLimitErrorReport( limits, limitsCheck, typeCheck = True ):
 	"""Formatting subroutine for assembling a user readable error report
 
-	Takes in array of limitations and another array indicating the 
+	Takes in array of limits and another array indicating the 
 	ways in which each is either compatible / met or 
 	incompatible / failed; it then generates a user readable report 
 	of said data
@@ -194,45 +193,45 @@ def generateLimitationErrorReport( limitations, limitationsCheck, typeCheck = Tr
 
 	sides = [ "Left", "Right" ]
 
-	# We get the limitations that have at least one 
+	# We get the limits that have at least one 
 	# failure / incompatability
-	failures = checkEvery( limitationsCheck, neg = True )
+	failures = checkEvery( limitsCheck, neg = True )
 
-	# Get the indices of the limitations in an array
-	limIndices = np.array( range( len( limitations ) ) )
+	# Get the indices of the limits in an array
+	limIndices = np.array( range( len( limits ) ) )
 
-	# Iterate over the indices of only the limitations that are
+	# Iterate over the indices of only the limits that are
 	# specified by `failures`
-	for limitationIndex in limIndices[ failures ]:
+	for limitIndex in limIndices[ failures ]:
 
 		# TODO: Refactor for readability and commentability
 		yield autoFormat( 
 			[ "This Comparison Operator is incompatible\n" ] + map( lambda i : 
 				autoFormat( 
-					np.array( range( len( limitations[ limitationIndex ][ i + 1 ] ) ) ), 
-					limitations[ limitationIndex ][ i + 1 ], 
+					np.array( range( len( limits[ limitIndex ][ i + 1 ] ) ) ), 
+					limits[ limitIndex ][ i + 1 ], 
 					pre = "The " + sides[ i ] + " Bounds", 
 					sep = ", ", 
 					end = "are " + condition + "\n"
 					),
 				range(2) ) 
-	, limitationsCheck[ limitationIndex ], 
-			pre = "The " + str(i) + "th Limitation is " + condition + " because...\n",
+	, limitsCheck[ limitIndex ], 
+			pre = "The " + str(i) + "th Limit is " + condition + " because...\n",
 			sep = "\n"
 			)
 
 ########################################################################
 
-def checkLimitations( oiq, limitations, verbose = False ):
-	"""Fault-tolerant subroutine, checks if `oiq` meets `limitations`
+def checkLimits( oiq, limits, verbose = False ):
+	"""Fault-tolerant subroutine, checks if `oiq` meets `limits`
 
-	First checks Type and Value to ensure that `limitations` are 
+	First checks Type and Value to ensure that `limits` are 
 	compatible with `oiq` before then -- supposing the Type and 
-	Value checks arepassed -- checking if the `limitations` are met by
+	Value checks arepassed -- checking if the `limits` are met by
 	`oiq`
 	"""
 
-	# First we will type-check the oiq against the `limitations`' 'Comparison Operators',
+	# First we will type-check the oiq against the `limits`' 'Comparison Operators',
 	# `comparator`s,  and `bounds`
 	try:
 
@@ -240,78 +239,78 @@ def checkLimitations( oiq, limitations, verbose = False ):
 		oiqType = type( oiq )
 
 		# We assert that every element in this array be True where this array is checking if the type of
-		# each limitation is compatible with the 'Object in Question', `oiq`
-		limitationsTypeCheck = np.array( [ 
+		# each limit is compatible with the 'Object in Question', `oiq`
+		limitsTypeCheck = np.array( [ 
 			np.array( [ 
 				checkOperatorType( oiqType, comparatorName ),
 				checkCollectionType( oiqType, leftBounds ),
 				checkCollectionType( oiqType, rightBounds ) 
 			] )
-		for ( comparatorName, ( leftBounds, rightBounds ) ) in limitations
+		for ( comparatorName, ( leftBounds, rightBounds ) ) in limits
 		] )
 
-		assert checkEvery( limitationsTypeCheck ).all()
+		assert checkEvery( limitsTypeCheck ).all()
 
 	# In the case that our assertion fails, we raise a TypeError 
 	except AssertionError:
 
-		raise( TypeError( autoFormat( limitations, checkEvery( limitationsTypeCheck, neg = True ), 
-			pre = "The following limitation(s) do not have compatible type(s):\n", 
-			sep = generateLimitationErrorReport( limitations, limitationsTypeCheck )
+		raise( TypeError( autoFormat( limits, checkEvery( limitsTypeCheck, neg = True ), 
+			pre = "The following limit(s) do not have compatible type(s):\n", 
+			sep = generateLimitErrorReport( limits, limitsTypeCheck )
 		) ) )
 
-	# Otherwise, we will then go about checking if the `limitations` are met by `oiq`
+	# Otherwise, we will then go about checking if the `limits` are met by `oiq`
 	else:
 
 		try:
 
 			# We assert that every element in this array be True where this array is checking if
-			# each limitation is met by the 'Object in Question'
-			limitationsCheck = np.array( [
+			# each limit is met by the 'Object in Question'
+			limitsCheck = np.array( [
 				checkBounds( oiq, comparatorName, bounds )
-				for ( comparatorName, bounds ) in limitations
+				for ( comparatorName, bounds ) in limits
 				] )
 
-			assert checkEvery( limitationsCheck ).all()
+			assert checkEvery( limitsCheck ).all()
 
 		# In the case that our assertion fails, we either return 
-		# `limitationsCheck` or we raise a ValueError
+		# `limitsCheck` or we raise a ValueError
 		# depending on the value of `verbose`
 		except AssertionError:
 
 			if( verbose ):
-				return limitationsCheck
+				return limitsCheck
 			else:
 
 				# The ValueError we raise is generated using the
-				# application of `autoFormat` to `limitation`
+				# application of `autoFormat` to `limit`
 				# and the application of `checkEvery` on 
-				# limitationsCheck in `neg` mode, with
+				# limitsCheck in `neg` mode, with
 				# a `sep` generator given by
-				# `generateLimitationErrorReport`
+				# `generateLimitErrorReport`
 				raise( ValueError( 
 					autoFormat( 
-						limitations, 
-						checkEvery( limitationsCheck, neg = True ),
-					pre = "The following limitation(s) are not met:\n",
-					sep = generateLimitationErrorReport( 
-						limitations, 
-						limitationsCheck, 
+						limits, 
+						checkEvery( limitsCheck, neg = True ),
+					pre = "The following limit(s) are not met:\n",
+					sep = generateLimitErrorReport( 
+						limits, 
+						limitsCheck, 
 						typeCheck = False 
 						) 
 				) ) )
 
-		# Otherwise, we will return True because all limitations are met by the `oiq`
+		# Otherwise, we will return True because all limits are met by the `oiq`
 		else:
 			return True
 
 ########################################################################
 
-def askUserRTI(	question, answerTypeName, answerLimitations = None ):
+def askUserRTI(	question, answerTypeName, answerLimits = None ):
 	"""A fault-tolerant subroutine for asking for real-time input
 
 	Takes a plain-text question and gets a Type and Value checked
-	answer that also meets any additional Limitations imposed
+	answer that also meets any additional Limits imposed
 	"""
 
 	answered = False
@@ -363,12 +362,12 @@ def askUserRTI(	question, answerTypeName, answerLimitations = None ):
 				print( "Value Error: " + str( e ) )
 
 			# If `answerType` is able to coerce the given string, then we check if
-			# `answer` is able to pass all requirements in `answerLimitations` 
+			# `answer` is able to pass all requirements in `answerLimits` 
 			else:
 				
-				limitationsCheck = checkLimitations( answer, answerLimitations, verbose = True )
+				limitsCheck = checkLimits( answer, answerLimits, verbose = True )
 
-				if( checkEvery( np.array( [ checkEvery( subcollection ) for subcollection in limitationsCheck ] )  ) ):
+				if( checkEvery( np.array( [ checkEvery( subcollection ) for subcollection in limitsCheck ] )  ) ):
 					print( "Answer Accepted!" )
 					answered = True
 	finally:
