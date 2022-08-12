@@ -5,7 +5,7 @@ import multiprocessing as mp
 
 ########################################################################
 
-def gen( arg: type ) -> type:
+def gen( arg ):
 	"""Returns a generator-type
 
 	This function return yield a generator type
@@ -15,7 +15,7 @@ def gen( arg: type ) -> type:
 
 ########################################################################
 
-def arr( arg: type ) -> type:
+def arr( arg ):
 	"""Returns the type of an arg-array
 
 	This function will return a `numpy.ndarray.dtype`
@@ -25,7 +25,7 @@ def arr( arg: type ) -> type:
 
 ########################################################################
 
-def autoFormat( collection: arr( object ), selection: type( bool ), pre="", sep="", end="" ) -> str:
+def autoFormat( collection, selection, pre="", sep="", end="" ):
 	"""A subroutine for constructing complex strings 
 
 	Uses a boolean-array, `selection`, as a slice on the provided array,
@@ -75,11 +75,11 @@ def autoFormat( collection: arr( object ), selection: type( bool ), pre="", sep=
 	else:
 
 		raise( AssertionError )
-		return
+
 
 ########################################################################
 
-def checkOperatorType( oiqType: type, operatorName: str ) -> bool:
+def checkOperatorType( oiqType, operatorName ):
 	"""Subroutine that checks if `oiq` & `operator` have compatible type
 
 	Checks if the `operatorName` provided is defined in the `__dict__` 
@@ -90,7 +90,7 @@ def checkOperatorType( oiqType: type, operatorName: str ) -> bool:
 
 ########################################################################
 
-def checkCollectionType( oiqType: type, collection: arr( object ) ) -> arr( bool ):
+def checkCollectionType( oiqType, collection ):
 	"""A subroutine for checking if  `collection` has a matching type
 
 	Takes in a target type and returns a boolean-array indicating which,
@@ -101,7 +101,7 @@ def checkCollectionType( oiqType: type, collection: arr( object ) ) -> arr( bool
 
 ########################################################################
 
-def checkLimitationType( oiqType: type, limitation: arr( tuple ) ) -> arr( arr( object ) ):
+def checkLimitationType( oiqType, limitation ):
 	"""Subroutine for checking if `oiq` and `limitiation` are compatible
 
 	Checks if the 'Object in Question', `oiq`, has a 
@@ -116,7 +116,7 @@ def checkLimitationType( oiqType: type, limitation: arr( tuple ) ) -> arr( arr( 
 
 ########################################################################
 
-def checkLeftBounds( oiq: object, comparator: object, bounds: arr( tuple ) ) -> arr( bool ):
+def checkLeftBounds( oiq, comparator, bounds ):
 	"""A subroutine for checking if `oiq` is bounded on the left
 
 	Checks if the 'Object in Question' is bounded on the left 
@@ -127,7 +127,7 @@ def checkLeftBounds( oiq: object, comparator: object, bounds: arr( tuple ) ) -> 
 
 ########################################################################
 
-def checkRightBounds( oiq: object, comparator: object, bounds: arr( tuple ) ) -> arr( bool ):
+def checkRightBounds( oiq, comparator, bounds ):
 	"""A subroutine for checking if `oiq` is bounded on the right
 
 	Checks if the 'Object in Question' is bounded on the right by 
@@ -138,7 +138,7 @@ def checkRightBounds( oiq: object, comparator: object, bounds: arr( tuple ) ) ->
 
 ########################################################################
 
-def checkBounds( oiq: object, comparator: object, bounds: arr( tuple ) ) -> tuple:
+def checkBounds( oiq, comparator, bounds ):
 	"""A subroutine for checking if `oiq` is bounded on the left & right
 
 	Checks if the 'Object in Question' is bounded on the left and right 
@@ -158,7 +158,7 @@ def checkBounds( oiq: object, comparator: object, bounds: arr( tuple ) ) -> tupl
 
 ########################################################################
 
-def checkEvery( collection: arr( object ), neg = False ) -> arr( bool ):
+def checkEvery( collection, neg = False ):
 	"""A subroutine for checking that all boolean-subarrays are all True
 
 	Iterates over `subcollection`s of `collection` and checks if each of
@@ -173,7 +173,7 @@ def checkEvery( collection: arr( object ), neg = False ) -> arr( bool ):
 
 ########################################################################
 
-def generateLimitationErrorReport(	limitations: arr( type ), limitationsCheck: arr( bool ), typeCheck = True ) -> gen():
+def generateLimitationErrorReport( limitations, limitationsCheck, typeCheck = True ):
 	"""Formatting subroutine for assembling a user readable error report
 
 	Takes in array of limitations and another array indicating the 
@@ -223,7 +223,7 @@ def generateLimitationErrorReport(	limitations: arr( type ), limitationsCheck: a
 
 ########################################################################
 
-def checkLimitations(	oiq: object, limitations: arr( tuple ), verbose = False ):
+def checkLimitations( oiq, limitations, verbose = False ):
 	"""Fault-tolerant subroutine, checks if `oiq` meets `limitations`
 
 	First checks Type and Value to ensure that `limitations` are 
@@ -307,7 +307,7 @@ def checkLimitations(	oiq: object, limitations: arr( tuple ), verbose = False ):
 
 ########################################################################
 
-def askUserRTI(	question: str, answerTypeName: str, answerLimitations = None ) -> object:
+def askUserRTI(	question, answerTypeName, answerLimitations = None ):
 	"""A fault-tolerant subroutine for asking for real-time input
 
 	Takes a plain-text question and gets a Type and Value checked
@@ -381,7 +381,7 @@ class TypeFormerAssistant:
 
 	TODO
 	"""
-	def __init__( self, verbose = True ) -> None:
+	def __init__( self, verbose = True ):
 
 		self.__workers = mp.Pool()
 
@@ -402,7 +402,7 @@ class TypeFormerAssistant:
 
 	####################################################################
 
-	def helloMessage( self ) -> None:
+	def helloMessage( self ):
 		"""Greets the user and introduces basic concepts
 
 		This method is only called automatically if the 
@@ -414,7 +414,7 @@ class TypeFormerAssistant:
 
 	####################################################################
 
-	def displayMethods( self ) -> None:
+	def displayMethods( self ):
 		"""This method displays only the public methods
 
 		This method is only called automatically if the 
@@ -426,21 +426,21 @@ class TypeFormerAssistant:
 
 	####################################################################
 
-	def __awaitInput( self ) -> gen( str ):
+	def __awaitInput( self ):
 
 		# TODO
 		print( "Await Input!" )
 
 	####################################################################
 
-	def __interpret( self, input: str ) -> str:
+	def __interpret( self, input ):
 
 		# TODO
 		print( "Interpret!" )
 
 ########################################################################
 
-def main() -> None:
+def main():
 	"""This is the main for TypeFormerAssistant
 
 
