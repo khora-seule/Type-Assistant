@@ -5,29 +5,34 @@ import multiprocessing as mp
 
 ########################################################################
 
-def gen():
-"""An abstract generator
+def gen( arg: type ) -> type:
+	"""Returns a generator-type
 
-This function will always yield a call of itself and so the type of any
-number of applications of `next` on it will always be a generator
-"""
+	This function return yield a generator type
+	"""
 
-	yield gen()
+	return type ( ( lambda : ( yield arg ) )() )
 
 ########################################################################
 
+def arr( arg: type ) -> type:
+	"""Returns the type of an arg-array
 
-def autoFormat( collection: type( np.array( [] ) ), 
-				selection: type( np.array( [ bool ] ) ), 
-				pre="", sep="", end="" 
-				) -> str:
-"""A subroutine for constructing complex strings 
+	This function will return a `numpy.ndarray.dtype`
+	"""
+	
+	return type( np.array( [ arg ], dtype = arg ) )
 
-Uses a boolean-array, `selection`, as a slice on the provided array,
-`collection`. A complex formatted string is then formatted, which 
-begins with `pre`, ends with `end`, and has exactly the 'elements'
-in our slice, each seperated by `sep`
-"""
+########################################################################
+
+def autoFormat( collection: arr( object ), selection: type( bool ), pre="", sep="", end="" ) -> str:
+	"""A subroutine for constructing complex strings 
+
+	Uses a boolean-array, `selection`, as a slice on the provided array,
+	`collection`. A complex formatted string is then formatted, which 
+	begins with `pre`, ends with `end`, and has exactly the 'elements'
+	in our slice, each seperated by `sep`
+	"""
 
 	sepType = type( sep )
 
@@ -53,7 +58,7 @@ in our slice, each seperated by `sep`
 			) + end
 
 	# If we have a generator of seperators
-	elif( type( sep( [] ) ) == type( gen() ) ):
+	elif( type( sep( [] ) ) == gen( type ) ):
 
 		# We get the generator for this given collection and selection
 		sep = sep( collection[ selection ] )
@@ -66,38 +71,43 @@ in our slice, each seperated by `sep`
 			pre 
 			) + end
 
+	# Otherwise, we have run into an error
+	else:
+
+		raise( AssertionError )
+		return
 
 ########################################################################
 
-def checkOperatorType( oiqType, operatorName ):
-"""A subroutine that checks if `oiq` and `operator` have compatible type
+def checkOperatorType( oiqType: type, operatorName: str ) -> bool:
+	"""Subroutine that checks if `oiq` & `operator` have compatible type
 
-Checks if the `operatorName` provided is defined the `__dict__` 
-of `oiqType`, and then returns the bool
-"""
+	Checks if the `operatorName` provided is defined in the `__dict__` 
+	of `oiqType`, and then returns the bool
+	"""
 
 	return ( operatorName in oiqType.__dict__ )
 
 ########################################################################
 
-def checkCollectionType( oiqType, collection ):
-"""A subroutine for checking if  `collection` has a matching type
+def checkCollectionType( oiqType: type, collection: arr( object ) ) -> arr( bool ):
+	"""A subroutine for checking if  `collection` has a matching type
 
-Takes in a target type and returns a boolean-array indicating which,
-if any, `elements` in the provided `collection` have matching type
-"""
+	Takes in a target type and returns a boolean-array indicating which,
+	if any, `elements` in the provided `collection` have matching type
+	"""
 
 	return np.array( [ ( oiqType and type( element ) ) for element in collection ] )
 
 ########################################################################
 
-def checkLimitationType( oiqType, limitation ):
-"""A subroutine for checking if `oiq` and `limitiation` are compatible
+def checkLimitationType( oiqType: type, limitation: arr( tuple ) ) -> arr( arr( object ) ):
+	"""Subroutine for checking if `oiq` and `limitiation` are compatible
 
-Checks if the 'Object in Question', `oiq`, has a 
-compatible type, `oiqType`, with the 'Comparison Operator', `comparator`, 
-and `bounds` in `limitation`
-"""
+	Checks if the 'Object in Question', `oiq`, has a 
+	compatible type, `oiqType`, with the 'Comparison Operator', 
+	`comparator`, and `bounds` in `limitation`
+	"""
 	return np.array( [ 
 				checkOperatorType( oiqType, limitation[ 0 ] ),
 				checkCollectionType( oiqType, limitation[ 1 ][ 0 ] ),
@@ -106,97 +116,96 @@ and `bounds` in `limitation`
 
 ########################################################################
 
-# Function Names: checkLeftBounds & checkRightBounds
+def checkLeftBounds( oiq: object, comparator: object, bounds: arr( tuple ) ) -> arr( bool ):
+	"""A subroutine for checking if `oiq` is bounded on the left
 
-# Each are subroutines for checking if the 'Object in Question', `oiq`, 
-# is bounded on either the left or right, respectively, by the specified `bounds` 
-# according to the provided 'Comparison Operator', `comparator`
-
-# Input:
-# `oiq`			:	'Object in Question'
-# `comparator`	:	'Comparison Operator'
-# `bounds`		:	A collection of 'Left Bounds' or 'Right Bounds', respectively
-
-# Output:
-# Each return a boolean-array of which bounds -- left and right bounds, respectively -- succesffully 
-# bound the 'Object in Question', `oiq`
-
-def checkLeftBounds( oiq, comparator, bounds ):
+	Checks if the 'Object in Question' is bounded on the left 
+	by `bounds` according to the 'Comparison Operator', `comparator`
+	"""
 
 	return np.array( [ comparator( bound, oiq ) for bound in bounds ] )
 
-def checkRightBounds( oiq, comparator, bounds ):
+########################################################################
+
+def checkRightBounds( oiq: object, comparator: object, bounds: arr( tuple ) ) -> arr( bool ):
+	"""A subroutine for checking if `oiq` is bounded on the right
+
+	Checks if the 'Object in Question' is bounded on the right by 
+	`bounds` according to the 'Comparison Operator', `comparator`
+	"""
 
 	return np.array( [ comparator( oiq, bound ) for bound in bounds ] )
 
 ########################################################################
 
-# Function Name: checkBounds
+def checkBounds( oiq: object, comparator: object, bounds: arr( tuple ) ) -> tuple:
+	"""A subroutine for checking if `oiq` is bounded on the left & right
 
-# A subroutine for checking if the 'Object in Question', `oiq`, 
-# lies within the specified `bounds` according to the provided 
-# 'Comparison Operator', `comparator`
+	Checks if the 'Object in Question' is bounded on the left and right 
+	by `bounds` according to the 'Comparison Operator', `comparator`
+	"""
 
-# Input:
-# `oiq`			:	'Object in Question'
-# `comparator`	:	'Comparison Operator'
-# `bounds`		:	A pair of 'Left Bounds' and 'Right Bounds'
-
-# Output: 
-# A pair of boolean-arrays of which left and right bounds succesfully bound the `oiq`
-
-def checkBounds( oiq, comparatorName, bounds ):
-
-	# First we translate the provided name, `comparatorName`, of a `comparator`
+	# First we translate the provided name, `comparatorName`,
+	# into an actual `comparator`
 	comparator = oiqType.__dict__[ comparatorName ]
 
-	# Then we assemble the pair by calling `checkLeftBounds` and `checkRightBounds`
-	return ( checkLeftBounds( oiq, comparator, bounds[0] ), checkRightBounds( oiq, comparator, bounds[1] ) )
+	# Then we assemble the pair by calling `checkLeftBounds` 
+	# and `checkRightBounds`
+	return ( 
+		checkLeftBounds( oiq, comparator, bounds[0] ), 
+		checkRightBounds( oiq, comparator, bounds[1] ) 
+		)
 
 ########################################################################
 
-# Function Name: checkEvery
+def checkEvery( collection: arr( object ), neg = False ) -> arr( bool ):
+	"""A subroutine for checking that all boolean-subarrays are all True
 
-# A subroutine for checking that all boolean-subarrays, `subcollection`s, of the 
-# boolean-array-array, `collection`, evaluate to True under application of `*.all()`
+	Iterates over `subcollection`s of `collection` and checks if each of
+	them are completely true by calling the `all` numpy method. `neg`
+	can be set to `True` in order to check if `any` are `False`
+	"""
 
-# Input:
-# `collection`	:	A boolean-array-array
-
-# Output:
-# A boolean indicating whether every subarray is 'All' True or not
-
-def checkEvery( collection, neg = False ):
-
-	return np.array( [ ( neg ^ subcollection.all() ) for subcollection in collection ] )
+	return np.array( [ 
+		( neg ^ subcollection.all() ) 
+		for subcollection in collection 
+		] )
 
 ########################################################################
 
-# Function Name: generateErrorReport
+def generateLimitationErrorReport(	limitations: arr( type ), limitationsCheck: arr( bool ), typeCheck = True ) -> gen():
+	"""Formatting subroutine for assembling a user readable error report
 
-# A formatting subroutine for assembling a user readable error report via a generator
+	Takes in array of limitations and another array indicating the 
+	ways in which each is either compatible / met or 
+	incompatible / failed; it then generates a user readable report 
+	of said data
+	"""
 
-# Input:
-# `limitations`				:	An array of pairs containing a 'Comparison Operator' and 'Bounds'
-# `limitationsTypeCheck`	:	An array of triples containing booleans indicating type compatability
-
-# Output:
-# A formatted string that can be passed to TypeError
-
-def generateLimitationErrorReport( limitations, limitationsXCheck, typeCheck = True ):
-
-	# If we are generating a typeChecking Error Report...
+	# If we are generating a TypeError Report...
 	if( typeCheck ):
 
 		condition = "incompatible"	
 
+	# Otherwise -- i.e. we are generating a ValueError Report...
 	else:
 
 		condition = "not met"
 
 	sides = [ "Left", "Right" ]
 
-	for limitationIndex in np.array( range( len( limitations ) ) )[ checkEvery( limitationsXCheck, neg = True ) ]:
+	# We get the limitations that have at least one 
+	# failure / incompatability
+	failures = checkEvery( limitationsCheck, neg = True )
+
+	# Get the indices of the limitations in an array
+	limIndices = np.array( range( len( limitations ) ) )
+
+	# Iterate over the indices of only the limitations that are
+	# specified by `failures`
+	for limitationIndex in limIndices[ failures ]:
+
+		# TODO: Refactor for readability and commentability
 		yield autoFormat( 
 			[ "This Comparison Operator is incompatible\n" ] + map( lambda i : 
 				autoFormat( 
@@ -214,25 +223,14 @@ def generateLimitationErrorReport( limitations, limitationsXCheck, typeCheck = T
 
 ########################################################################
 
-# Function Name: checkLimitations
+def checkLimitations(	oiq: object, limitations: arr( tuple ), verbose = False ):
+	"""Fault-tolerant subroutine, checks if `oiq` meets `limitations`
 
-# A fault-tolerant subroutine for checking if the 'Object in Question', `oiq`, meets the
-# specified `limitations`
-
-# Input:
-# `oiq`			:	'Object in Question'
-# `limitations`	:	An array of pairs containing a 'Comparison Operator' and 'Bounds'
-
-# Output ( if not verbose ):
-# A boolean indicating whether all limitations are met or not
-
-# Output ( if verbose ):
-# A 3d-array of which `limitations` have been met
-# The 1st dimension is which limitation, 
-# the 2nd is which side failed to be bounded,
-# the 3rd is which bound failed
-
-def checkLimitations( oiq, limitations, verbose = False ):
+	First checks Type and Value to ensure that `limitations` are 
+	compatible with `oiq` before then -- supposing the Type and 
+	Value checks arepassed -- checking if the `limitations` are met by
+	`oiq`
+	"""
 
 	# First we will type-check the oiq against the `limitations`' 'Comparison Operators',
 	# `comparator`s,  and `bounds`
@@ -285,9 +283,22 @@ def checkLimitations( oiq, limitations, verbose = False ):
 				return limitationsCheck
 			else:
 
-				raise( ValueError( autoFormat( limitations, checkEvery( limitationsCheck, neg = True ),
+				# The ValueError we raise is generated using the
+				# application of `autoFormat` to `limitation`
+				# and the application of `checkEvery` on 
+				# limitationsCheck in `neg` mode, with
+				# a `sep` generator given by
+				# `generateLimitationErrorReport`
+				raise( ValueError( 
+					autoFormat( 
+						limitations, 
+						checkEvery( limitationsCheck, neg = True ),
 					pre = "The following limitation(s) are not met:\n",
-					sep = generateLimitationErrorReport( limitations, limitationsCheck, typeCheck = False ) 
+					sep = generateLimitationErrorReport( 
+						limitations, 
+						limitationsCheck, 
+						typeCheck = False 
+						) 
 				) ) )
 
 		# Otherwise, we will return True because all limitations are met by the `oiq`
@@ -296,19 +307,12 @@ def checkLimitations( oiq, limitations, verbose = False ):
 
 ########################################################################
 
-# Function Name: askUserRTI
+def askUserRTI(	question: str, answerTypeName: str, answerLimitations = None ) -> object:
+	"""A fault-tolerant subroutine for asking for real-time input
 
-# A fault-tolerant subroutine for asking the user for real-time input
-
-# Input:
-# `question`			:	A string expressing the inquiry for the user
-# `answerTypeName`		:	A string representing the name of the type `answer` must be coercible to
-# `answerLimitations`	:	An optional array of pairs containing a 'Comparison Operator' and 'Bounds'
-
-# Output:
-# A validated answer recieved via real-time input
-
-def askUserRTI( question, answerTypeName, answerLimitations = None ):
+	Takes a plain-text question and gets a Type and Value checked
+	answer that also meets any additional Limitations imposed
+	"""
 
 	answered = False
 
@@ -372,16 +376,12 @@ def askUserRTI( question, answerTypeName, answerLimitations = None ):
 
 ########################################################################
 
-# Class Name: TypeFormerAssistant
-
-# This class enables real-time user formation of Types via asking the user for real-time input.
-
-# Parameters:
-# None
-
 class TypeFormerAssistant:
+	"""Enables real-time user formation of Types via real-time input
 
-	def __init__( verbose = True ):
+	TODO
+	"""
+	def __init__( self, verbose = True ) -> None:
 
 		self.__workers = mp.Pool()
 
@@ -398,45 +398,58 @@ class TypeFormerAssistant:
 		# We begin the life-cycle loop of our TypeFormerAssistant
 		while( not __exit ):
 
-			__workers.map( self.interpret, awaitInput() )
-
+			__workers.map( __interpret, __awaitInput() )
 
 	####################################################################
 
-	def helloMessage():
-	"""Greets the user and introduces basic concepts
+	def helloMessage( self ) -> None:
+		"""Greets the user and introduces basic concepts
 
-	This method is only called if the TypeFormerAssistant is started 
-	in `verbose` mode
-	"""
+		This method is only called automatically if the 
+		TypeFormerAssistant is started in `verbose` mode
+		"""
 
 		# TODO
 		print( "Hello Message!" )
 
 	####################################################################
 
-	def displayMethods():
-	"""This method displays only the public methods
+	def displayMethods( self ) -> None:
+		"""This method displays only the public methods
 
-	This method is only called if the TypeFormerAssistant is started 
-	in `verbose` mode
-	"""
+		This method is only called automatically if the 
+		TypeFormerAssistant is started in `verbose` mode
+		"""
 
 		# TODO
 		print( "Display Methods!")
 
+	####################################################################
+
+	def __awaitInput( self ) -> gen( str ):
+
+		# TODO
+		print( "Await Input!" )
+
+	####################################################################
+
+	def __interpret( self, input: str ) -> str:
+
+		# TODO
+		print( "Interpret!" )
+
 ########################################################################
 
-def main():
-"""This is the main for TypeFormerAssistant
+def main() -> None:
+	"""This is the main for TypeFormerAssistant
 
 
-Side-effects are dependent on 'Real-Time-Input' from the User:
-Results can be printed to terminal during runtime, or
-Results can be written to files as serialized objects ( JSON ), or
-Results can be written to files as binaries to be reloaded 
-later ( pickling )
-"""
+	Side-effects are dependent on 'Real-Time-Input' from the User:
+	Results can be printed to terminal during runtime, or
+	Results can be written to files as serialized objects ( JSON ), or
+	Results can be written to files as binaries to be reloaded 
+	later ( pickling )
+	"""
 
 	# TODO
 	print( "Main!" )
