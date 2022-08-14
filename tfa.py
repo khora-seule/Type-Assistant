@@ -2,6 +2,7 @@ import numpy as np
 import functools as ft
 import itertools as it
 import multiprocessing as mp
+from abc import ABC, abstractmethod
 
 ########################################################################
 
@@ -318,20 +319,24 @@ def askUserRTI(	question, answerTypeName, answerLimits = None ):
 	# First we ensure that our `answerTypeName` is well-defined
 	try:
 
-		answerType = locals()[ answerTypeName ]
+		answerType = globals()[ answerTypeName ]
 
-	# If the `answerType` is unable to be retrieved we raise the KeyError
+	# If the `answerType` is unable to be retrieved we first check if
+	# the type exists in `builtins` before raising the error
 	except KeyError as e:
 
-		raise( e )
+		try:
+			answerType = globals()[ "__builtins__" ].__dict__[ answerTypeName ]
+		except:
+			raise( e )
 		
-	# Otherwise we use the `answerType` as our constructor on `answer`
-	else:
+	# Finally we use the `answerType` as our constructor on `answer`
+	finally:
 
 		while( not answered ):
 
 			# To get `answer` we ask `question`
-			answer = input( question + "\n\t->\t" )
+			answer = input( "|| " + question + "\n\\\\>>>\t" )
 
 			# We then want to see if `answerType` is able to act on `answer` without error
 			try:
@@ -350,13 +355,20 @@ def askUserRTI(	question, answerTypeName, answerLimits = None ):
 			# a new answer from the user
 			except ValueError as e:
 
+				
+				errorMessage =	( 
+								"||\n" + "VV\n||\n" +
+								"|]===[ Sorry! Your answer isn't valid!\n||\n \\\\\n"+
+								"  |]===[ The `ValueError` is printed below, and it means that your \n" +
+							   	"  |]===[ answer doesn't fall within the range of strings that\n" +
+							   	"  |]===[ the answer type for this question is able to understand.\n" +
+							   	"  ||\n" + "  VV\n" +
+							   	"  ||"
+							   	"  |]===[ Once you understand how to correct your answer, please try again.\n\n" 
+							   	)
+
 				# First, we tell the user about the error and that we are going to describe it
-				print( """ 
-						Sorry! Your answer isn't valid. The `ValueError` is printed below,
-						and it means that your answer doesn't fall within the range of strings that 
-						the answer type for this question is able to understand. Once you
-						understand how to correct your answer, please try again.
-					""" )
+				print( errorMessage )
 
 				# Then, we pass along the `ValueError` text itself
 				print( "Value Error: " + str( e ) )
@@ -365,36 +377,167 @@ def askUserRTI(	question, answerTypeName, answerLimits = None ):
 			# `answer` is able to pass all requirements in `answerLimits` 
 			else:
 				
-				limitsCheck = checkLimits( answer, answerLimits, verbose = True )
+				if( answerLimits ):
 
-				if( checkEvery( np.array( [ checkEvery( subcollection ) for subcollection in limitsCheck ] )  ) ):
-					print( "Answer Accepted!" )
+					limitsCheck = checkLimits( answer, answerLimits, verbose = True )
+
+					if( checkEvery( np.array( [ checkEvery( subcollection ).all() for subcollection in limitsCheck ] )  ).all() ):
+						answered = True
+					else:
+						print( "Limits Failed!" )
+				else:
 					answered = True
-	finally:
+
+			
 		return answer
 
 ########################################################################
 
-class TypeFormerAssistant:
-	"""Enables real-time user formation of Types via real-time input
+class TypeWorker( ABC ):
+	"""Abstract-Base-Class for Type-related Workers
+
+	Worker classes that derive from this class include:
+	TypeFormer, TypeConstructor, TypeDestructor, and TypeChecker
+	"""
+
+	def __init__( self, info, args ):
+		"""Initialization for TypeWorker derived classes
+
+		Creates `__worker` using `info` before calling the `work` method
+		"""
+		
+		self.__worker = self.initWork( info )
+
+		self.work( args )
+
+	####################################################################
+
+	@abstractmethod
+	def initWork( self, info ):
+		"""Abstract method for generating __worker
+
+		Any derived TypeWorker must define this method and return a
+		a function that can take in the desired `args`
+		"""
+
+		pass
+
+	####################################################################
+
+	def work( self, args ):
+		"""Public method for __worker
+
+		Assigns the result of applying `__worker` to `args` to 
+		`__myType`
+		"""
+
+		self.__myType = self.__worker( args )
+
+	####################################################################
+
+	def myType( self ):
+		"""Public accessor for __myType
+
+		Simply returns the private data-memeber `__myType`
+		"""
+
+		return self.__myType
+
+########################################################################
+
+class TypeConstructor( TypeWorker ):
+	"""
+
+	"""
+
+	def initWork( self, blueprint ):
+	"""Derived method for creating __worker
+
+	`blueprint` must be a tuple containing a 'Structure' function,
+	`typeMap`, and a 'Constructor' `typeList` of `constructorTypes`
+	"""
+
+
+########################################################################
+
+class TypeDestructor( TypeWorker ):
+	"""TypeWorker derived class
 
 	TODO
 	"""
+
+	def initWork( self, blueprint ):
+		"""Derived method for creating __worker
+
+		`blueprint` must be a tuple containing a 'Structure' function,
+		`typeMap`, and a 'Destructor' `typeList` of `destructorTypes`
+		"""
+
+
+
+########################################################################
+
+class TypeFormer( TypeWorker ):
+	"""TypeWorker derived class which holds Type formation info
+
+	A worker responsible for turning representations of types into the
+	type that is being represented
+	"""
+
+	def initWork( self, formation ):
+		"""Derived method for creating __worker
+
+		`formation` must be a triple containing a a 'Structure'
+		function, `typeMap`, a 'Constructor TypeList' `constructorTypes`, 
+		a 'Destructor TypeList' `destructorTypes`
+		"""
+		
+		return ( lambda name : (
+			( lambda constructorArgs : TypeConstructor( ( formation[0], formation[1] ), constructorArgs ) ),
+			( lambda destructorArgs : TypeDestructor( ( formation[0], formation[-1] ), destructorArgs ) )
+			)
+		) 
+
+
+########################################################################
+
+class TypeChecker:
+	"""Enables automatic TypeChecking and Error Reports
+
+	TODO
+	"""
+
+	def initWork( self, workers ):
+		"""
+
+		"""
+
+
+########################################################################
+
+class TypeAssistant:
+	"""Enables user management of Types via user real-time input
+
+	TODO
+	"""
+
 	def __init__( self, verbose = True ):
 
 		self.__workers = mp.Pool()
+
+		self.__types = {}
 
 		self.__exit = False
 
 		if ( verbose ):
 
-			# We greet the user and introduce the TypeFormerAssistant
+			# We greet the user and introduce the TypeAssistant
 			helloMessage()
 
 			# We display the options available 
 			displayMethods()
 
-		# We begin the life-cycle loop of our TypeFormerAssistant
+		# We begin the life-cycle loop of our TypeAssistant
 		while( not __exit ):
 
 			__workers.map( __interpret, __awaitInput() )
@@ -440,7 +583,7 @@ class TypeFormerAssistant:
 ########################################################################
 
 def main():
-	"""This is the main for TypeFormerAssistant
+	"""This is the main for TypeAssistant
 
 
 	Side-effects are dependent on 'Real-Time-Input' from the User:
@@ -452,6 +595,9 @@ def main():
 
 	# TODO
 	print( "Main!" )
-
+	answer = askUserRTI( "How many?", 'int' )
+	print( "The Answer you gave was:", answer )
+	print( "The Type of Answer was:", type( answer ) )
+ 
 if __name__ == '__main__':
 	main()
