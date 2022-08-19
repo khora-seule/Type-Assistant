@@ -26,6 +26,16 @@ def arr( arg ):
 
 ########################################################################
 
+def reIndex( index, reiterable ):
+	"""Indexes into reiterable with the result of indexing with index
+
+
+	"""
+	
+	return reiterable[ reiterable[ index ] ]
+
+########################################################################
+
 def autoFormat( collection, selection, pre="", sep="", end="" ):
 	"""A subroutine for constructing complex strings 
 
@@ -43,8 +53,8 @@ def autoFormat( collection, selection, pre="", sep="", end="" ):
 
 		return pre + sep.join( collection[ selection ] ) + end
 
-	# If we have a list of seperators
-	elif( sepType == type( [] ) ):
+	# If we have a list or tuple of seperators
+	elif( sepType in ( type( [] ), type( () ) ) ):
 
 		# We get the selection from collection so we can index
 		# into it in our lambda expression
@@ -192,7 +202,7 @@ def generateLimitErrorReport( limits, limitsCheck, typeCheck = True ):
 
 		condition = "not met"
 
-	sides = [ "Left", "Right" ]
+	sides = ( "Left", "Right" )
 
 	# We get the limits that have at least one 
 	# failure / incompatability
@@ -406,14 +416,30 @@ class TypeWorker( ABC ):
 		Creates `__worker` using `info` before calling the `work` method
 		"""
 		
-		self.__worker = self.initWork( info )
+		( poolInfo, workerInfo ) = info
+
+		self.__initPool( poolInfo )
+
+		self.__initWorker( workerInfo )
 
 		self.work( args )
 
 	####################################################################
 
 	@abstractmethod
-	def initWork( self, info ):
+	def __initPool( self, info ):
+		"""Abstract method for generating __pool
+
+		Any derived TypeWorker must define this method and return a
+		a process Pool
+		"""
+
+		pass
+
+	####################################################################
+
+	@abstractmethod
+	def __initWorker( self, info ):
 		"""Abstract method for generating __worker
 
 		Any derived TypeWorker must define this method and return a
@@ -445,35 +471,36 @@ class TypeWorker( ABC ):
 
 ########################################################################
 
-class TypeConstructor( TypeWorker ):
-	"""
+class TypeStructor( TypeWorker ):
+	"""TypeWorker derived class for both 'Type*structor's
 
 	"""
 
-	def initWork( self, blueprint ):
-	"""Derived method for creating __worker
+	def __initPool( self, poolInfo ):
 
-	`blueprint` must be a tuple containing a 'Structure' function,
-	`typeMap`, and a 'Constructor' `typeList` of `constructorTypes`
-	"""
+		pass
 
+	def __initWorker( self, blueprint ):
 
-########################################################################
+		( self.__typeMap, self.__constructorList, self.__destructorList ) = blueprint
 
-class TypeDestructor( TypeWorker ):
-	"""TypeWorker derived class
+		labels = np.array( [ t[ 0 ] for t in np.hstack( ( self.__constructorList, self.__destructorList ) )
 
-	TODO
-	"""
+		( numOfC, numOfD ) = it.map( lambda iterable : range( len ( iterable ) ), ( self.__constructorList, self.__destructorList ) )
 
-	def initWork( self, blueprint ):
-		"""Derived method for creating __worker
+		( self.constructor, self.destructor ) = it.map( ( lambda number, iterable : dict( zip( range( number ), iterable ) ) ), ( ( numOfC, self.__constructorList ), ( numOfD, self.__destructorList ) ) )
 
-		`blueprint` must be a tuple containing a 'Structure' function,
-		`typeMap`, and a 'Destructor' `typeList` of `destructorTypes`
-		"""
+		for t in self.constructor:
 
+			self.constructor[ self.constructor[ t ] ] = ( lambda args : self.__destructorList[ t ][ 1 ].constructor( self.__typeMap( self.__constructorList[ t ][ 1 ].constructor, self.__constructorList[ t ][ 1 ].destructor, args ) ) )
 
+		for t in self.destructor:
+
+			self.destructor[ self.destructor[ t ] ] = ( lambda args : self.__destructorList[ t ][ 1 ]( args ) )
+
+		self.__worker = self.constructor
+
+    ####################################################################
 
 ########################################################################
 
@@ -484,20 +511,18 @@ class TypeFormer( TypeWorker ):
 	type that is being represented
 	"""
 
-	def initWork( self, formation ):
+	def __initWorker( self, formation ):
 		"""Derived method for creating __worker
 
-		`formation` must be a triple containing a a 'Structure'
+		`formation` must be a triple containing a 'Structure'
 		function, `typeMap`, a 'Constructor TypeList' `constructorTypes`, 
-		a 'Destructor TypeList' `destructorTypes`
+		and a 'Destructor TypeList' `destructorTypes`
 		"""
 		
-		return ( lambda name : (
-			( lambda constructorArgs : TypeConstructor( ( formation[0], formation[1] ), constructorArgs ) ),
-			( lambda destructorArgs : TypeDestructor( ( formation[0], formation[-1] ), destructorArgs ) )
-			)
-		) 
+		structor = ( lambda constructorArgs : TypeStructor( formation, constructorArgs ) )
 
+		return ( lambda name : np.array( ( name, structor ) ) )
+			
 
 ########################################################################
 
@@ -507,7 +532,7 @@ class TypeChecker:
 	TODO
 	"""
 
-	def initWork( self, workers ):
+	def __initWorker( self, workers ):
 		"""
 
 		"""
@@ -579,6 +604,34 @@ class TypeAssistant:
 
 		# TODO
 		print( "Interpret!" )
+
+	####################################################################
+
+	def create( self, manual = None ):
+
+		# TODO
+		print( "Create a Type!" )
+
+	####################################################################
+
+	def edit( self, manual = None ):
+
+		# TODO
+		print( "Edit a Type!" )
+
+	####################################################################
+
+	def delete( self, manual = None ):
+
+		# TODO
+		print( "Delete a Type!" )
+
+	####################################################################
+
+	def export( self, manual = None ):
+
+		# TODO
+		print( "Export a Type!" )
 
 ########################################################################
 
