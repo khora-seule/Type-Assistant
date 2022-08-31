@@ -9,7 +9,6 @@ import numpy as np
 def infGen():
 
 	return ( _ for _ in it.cycle( ( None ) ) )
-
 #######################################################################
 
 def applyString( func, args ):
@@ -18,15 +17,16 @@ def applyString( func, args ):
 
 #######################################################################
 
-def extract( info ):
-
-	return  ( info[ 0 ], info[ 1 : ] ) if ( info != None ) else ( None, None )
-
-#######################################################################
-
 #def formatify( labels, values ):
 
 #	apply( ",".join( [ "{" + label + "}" for label in labels ] ) )
+
+#######################################################################
+
+
+#def extract( info ):
+
+#	return  ( info[ 0 ], info[ 1 : ] ) if ( info != None ) else ( None, None )
 
 #######################################################################
 
